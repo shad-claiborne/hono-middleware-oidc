@@ -195,7 +195,7 @@ export const forAuthorization = createMiddleware(async (c) => {
             HONO_OIDC_REFRESH_TOKEN_COOKIE,
             tokenResponse.refresh_token,
             HONO_OIDC_COOKIE_SECRET,
-            { httpOnly: true, secure: true, sameSite: 'Lax' }
+            { httpOnly: true, secure: true, sameSite: 'Lax', maxAge }
         );
     }
     if (tokenResponse.id_token) {
