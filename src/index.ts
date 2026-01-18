@@ -70,21 +70,19 @@ export const withIdentity = createMiddleware(async (c, next) => {
                     HONO_OIDC_COOKIE_SECRET,
                     { httpOnly: true, secure: true, sameSite: 'Lax' }
                 );
-            if (tokenResponse.refresh_token)
+            if (tokenResponse.refresh_token) {
+                const maxAge = tokenResponse.refresh_token_expires_in ?? (24 * 60 * 60);
                 await setSignedCookie(
                     c,
                     HONO_OIDC_REFRESH_TOKEN_COOKIE,
                     tokenResponse.refresh_token,
                     HONO_OIDC_COOKIE_SECRET,
-                    { httpOnly: true, secure: true, sameSite: 'Lax' }
+                    { httpOnly: true, secure: true, sameSite: 'Lax', maxAge }
                 );
+            }
             if (tokenResponse.id_token) {
-                let maxAge = 3600;
                 const idToken: IdentityToken = await provider.decodeIdentityToken(tokenResponse.id_token);
-
-                if (idToken.exp) {
-                    maxAge = idToken.exp - Math.floor(Date.now() / 1000);
-                }
+                const maxAge = idToken.exp - Math.floor(Date.now() / 1000);
                 await setSignedCookie(
                     c,
                     HONO_OIDC_ID_TOKEN_COOKIE,
@@ -197,12 +195,8 @@ export const forAuthorization = createMiddleware(async (c) => {
             { httpOnly: true, secure: true, sameSite: 'Lax' }
         );
     if (tokenResponse.id_token) {
-        let maxAge = 3600;
         const idToken: IdentityToken = await provider.decodeIdentityToken(tokenResponse.id_token);
-
-        if (idToken.exp) {
-            maxAge = idToken.exp - Math.floor(Date.now() / 1000);
-        }
+        const maxAge = idToken.exp - Math.floor(Date.now() / 1000);
         await setSignedCookie(
             c,
             HONO_OIDC_ID_TOKEN_COOKIE,
