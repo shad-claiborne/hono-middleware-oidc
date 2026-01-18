@@ -21,8 +21,7 @@
   ],
   "scripts": {
     "build": "tsc",
-    "test": "vitest",
-    "test:browser": "vitest --config=vitest.browser.config.ts"
+    "test": "vitest"
   },
   "keywords": [
     "hono",
