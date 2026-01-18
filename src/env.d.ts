@@ -1,0 +1,11 @@
+type HonoMiddlewareOidcEnv = {
+    HONO_OIDC_ISSUER: string;
+    HONO_OIDC_CLIENT_ID: string;
+    HONO_OIDC_CLIENT_SECRET: string;
+    HONO_OIDC_REDIRECT_URI: string;
+    HONO_OIDC_COOKIE_SECRET: string;
+    HONO_OIDC_ID_TOKEN_COOKIE: string;
+    HONO_OIDC_REFRESH_TOKEN_COOKIE: string;
+    HONO_OIDC_ACCESS_TOKEN_COOKIE: string;
+    HONO_OIDC_CODE_VERIFIER_COOKIE: string;
+};
