@@ -1,6 +1,6 @@
 {
   "name": "@shad-claiborne/hono-middleware-oidc",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "OIDC middleware for Hono",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
