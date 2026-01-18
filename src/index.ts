@@ -62,7 +62,7 @@ export const withIdentity = createMiddleware(async (c, next) => {
             const tokenResponse: TokenResponse = await client.refreshAccess(tokenSet);
             id = await provider.getIdentity(tokenResponse);
 
-            if (tokenResponse.access_token)
+            if (tokenResponse.access_token) {
                 await setSignedCookie(
                     c,
                     HONO_OIDC_ACCESS_TOKEN_COOKIE,
@@ -70,6 +70,7 @@ export const withIdentity = createMiddleware(async (c, next) => {
                     HONO_OIDC_COOKIE_SECRET,
                     { httpOnly: true, secure: true, sameSite: 'Lax' }
                 );
+            }
             if (tokenResponse.refresh_token) {
                 const maxAge = tokenResponse.refresh_token_expires_in ?? (24 * 60 * 60);
                 await setSignedCookie(
@@ -178,7 +179,7 @@ export const forAuthorization = createMiddleware(async (c) => {
         { codeVerifier, redirectUri: HONO_OIDC_REDIRECT_URI }
     );
 
-    if (tokenResponse.access_token)
+    if (tokenResponse.access_token) {
         await setSignedCookie(
             c,
             HONO_OIDC_ACCESS_TOKEN_COOKIE,
@@ -186,7 +187,9 @@ export const forAuthorization = createMiddleware(async (c) => {
             HONO_OIDC_COOKIE_SECRET,
             { httpOnly: true, secure: true, sameSite: 'Lax', maxAge: tokenResponse.expires_in }
         );
-    if (tokenResponse.refresh_token)
+    }
+    if (tokenResponse.refresh_token) {
+        const maxAge = tokenResponse.refresh_token_expires_in ?? (24 * 60 * 60);
         await setSignedCookie(
             c,
             HONO_OIDC_REFRESH_TOKEN_COOKIE,
@@ -194,6 +197,7 @@ export const forAuthorization = createMiddleware(async (c) => {
             HONO_OIDC_COOKIE_SECRET,
             { httpOnly: true, secure: true, sameSite: 'Lax' }
         );
+    }
     if (tokenResponse.id_token) {
         const idToken: IdentityToken = await provider.decodeIdentityToken(tokenResponse.id_token);
         const maxAge = idToken.exp - Math.floor(Date.now() / 1000);
