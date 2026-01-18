@@ -7,6 +7,7 @@ import {
     createIdentityProvider,
     Identity,
     IdentityProvider,
+    IdentityToken,
     TokenResponse,
     TokenSet,
 } from "@shad-claiborne/basic-oidc";
@@ -52,14 +53,14 @@ export const withIdentity = createMiddleware(async (c, next) => {
     let id: Identity | null;
 
     try {
-        id = await provider.getIdentity(client, tokenSet);
+        id = await provider.getIdentity(tokenSet);
     } catch (err) {
         id = null;
     }
     if (id === null) {
         try {
             const tokenResponse: TokenResponse = await client.refreshAccess(tokenSet);
-            id = await provider.getIdentity(client, tokenResponse);
+            id = await provider.getIdentity(tokenResponse);
 
             if (tokenResponse.access_token)
                 await setSignedCookie(
@@ -67,7 +68,7 @@ export const withIdentity = createMiddleware(async (c, next) => {
                     HONO_OIDC_ACCESS_TOKEN_COOKIE,
                     tokenResponse.access_token,
                     HONO_OIDC_COOKIE_SECRET,
-                    { httpOnly: true, secure: true, sameSite: "strict" }
+                    { httpOnly: true, secure: true, sameSite: 'Lax' }
                 );
             if (tokenResponse.refresh_token)
                 await setSignedCookie(
@@ -75,16 +76,23 @@ export const withIdentity = createMiddleware(async (c, next) => {
                     HONO_OIDC_REFRESH_TOKEN_COOKIE,
                     tokenResponse.refresh_token,
                     HONO_OIDC_COOKIE_SECRET,
-                    { httpOnly: true, secure: true, sameSite: "strict" }
+                    { httpOnly: true, secure: true, sameSite: 'Lax' }
                 );
-            if (tokenResponse.id_token)
+            if (tokenResponse.id_token) {
+                let maxAge = 3600;
+                const idToken: IdentityToken = await provider.decodeIdentityToken(tokenResponse.id_token);
+
+                if (idToken.exp) {
+                    maxAge = idToken.exp - Math.floor(Date.now() / 1000);
+                }
                 await setSignedCookie(
                     c,
                     HONO_OIDC_ID_TOKEN_COOKIE,
                     tokenResponse.id_token,
                     HONO_OIDC_COOKIE_SECRET,
-                    { httpOnly: true, secure: true, sameSite: "strict" }
+                    { httpOnly: true, secure: true, sameSite: 'Lax', maxAge }
                 );
+            }
         } catch (err) {
             const stateId = randomstring.generate(5);
             const state = { originUrl: c.req.url };
@@ -93,7 +101,7 @@ export const withIdentity = createMiddleware(async (c, next) => {
                 `_authstate-${stateId}`,
                 JSON.stringify(state),
                 HONO_OIDC_COOKIE_SECRET,
-                { httpOnly: true, secure: true, sameSite: "strict" }
+                { httpOnly: true, secure: true, sameSite: 'Lax' }
             );
             const codeVerifier = randomstring.generate(16);
             await setSignedCookie(
@@ -101,7 +109,7 @@ export const withIdentity = createMiddleware(async (c, next) => {
                 HONO_OIDC_CODE_VERIFIER_COOKIE,
                 codeVerifier,
                 HONO_OIDC_COOKIE_SECRET,
-                { httpOnly: true, secure: true, sameSite: "strict" }
+                { httpOnly: true, secure: true, sameSite: 'Lax' }
             );
             const authRequest: AuthorizationRequest = client
                 .newAuthorizationRequest()
@@ -178,7 +186,7 @@ export const forAuthorization = createMiddleware(async (c) => {
             HONO_OIDC_ACCESS_TOKEN_COOKIE,
             tokenResponse.access_token,
             HONO_OIDC_COOKIE_SECRET,
-            { httpOnly: true, secure: true, sameSite: "strict" }
+            { httpOnly: true, secure: true, sameSite: 'Lax', maxAge: tokenResponse.expires_in }
         );
     if (tokenResponse.refresh_token)
         await setSignedCookie(
@@ -186,15 +194,22 @@ export const forAuthorization = createMiddleware(async (c) => {
             HONO_OIDC_REFRESH_TOKEN_COOKIE,
             tokenResponse.refresh_token,
             HONO_OIDC_COOKIE_SECRET,
-            { httpOnly: true, secure: true, sameSite: "strict" }
+            { httpOnly: true, secure: true, sameSite: 'Lax' }
         );
-    if (tokenResponse.id_token)
+    if (tokenResponse.id_token) {
+        let maxAge = 3600;
+        const idToken: IdentityToken = await provider.decodeIdentityToken(tokenResponse.id_token);
+
+        if (idToken.exp) {
+            maxAge = idToken.exp - Math.floor(Date.now() / 1000);
+        }
         await setSignedCookie(
             c,
             HONO_OIDC_ID_TOKEN_COOKIE,
             tokenResponse.id_token,
             HONO_OIDC_COOKIE_SECRET,
-            { httpOnly: true, secure: true, sameSite: "strict" }
+            { httpOnly: true, secure: true, sameSite: 'Lax', maxAge }
         );
+    }
     return c.redirect(state.originUrl);
 });
