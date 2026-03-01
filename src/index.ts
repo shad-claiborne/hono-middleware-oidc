@@ -94,7 +94,7 @@ export const withIdentity: MiddlewareHandler = async (c, next) => {
             }
         } catch (err) {
             const stateId = randomstring.generate(5);
-            const state = { originUrl: c.req.url };
+            const state = { originUrl: c.get('originUrl') || c.req.url };
             await setSignedCookie(
                 c,
                 `_authstate-${stateId}`,
