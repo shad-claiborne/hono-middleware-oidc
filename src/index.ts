@@ -1,5 +1,4 @@
 import { deleteCookie, getSignedCookie, setSignedCookie } from "hono/cookie";
-import { createMiddleware } from "hono/factory";
 import {
     AuthorizationRequest,
     AuthorizationResponse,
@@ -13,8 +12,9 @@ import {
 } from "@shad-claiborne/basic-oidc";
 import randomstring from "randomstring";
 import { env } from "hono/adapter";
+import { MiddlewareHandler } from "hono";
 
-export const withIdentity = createMiddleware(async (c, next) => {
+export const withIdentity: MiddlewareHandler = async (c, next) => {
     const {
         HONO_OIDC_ISSUER,
         HONO_OIDC_CLIENT_ID,
@@ -124,9 +124,9 @@ export const withIdentity = createMiddleware(async (c, next) => {
     }
     c.set("identity", id);
     await next();
-});
+};
 
-export const forAuthorization = createMiddleware(async (c) => {
+export const forAuthorization: MiddlewareHandler = async (c) => {
     const {
         HONO_OIDC_ISSUER,
         HONO_OIDC_CLIENT_ID,
@@ -210,4 +210,4 @@ export const forAuthorization = createMiddleware(async (c) => {
         );
     }
     return c.redirect(state.originUrl);
-});
+};
