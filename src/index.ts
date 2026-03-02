@@ -61,62 +61,6 @@ const activateToken = async (c: Context, provider: IdentityProvider, tokenRespon
 };
 
 /**
- * handleFlow
- * @param c 
- * @param next 
- * @returns 
- */
-export const handleFlow: MiddlewareHandler = async (c, next) => {
-    const {
-        HONO_OIDC_ISSUER,
-        HONO_OIDC_CLIENT_ID,
-        HONO_OIDC_CLIENT_SECRET,
-        HONO_OIDC_REDIRECT_URI,
-        HONO_OIDC_COOKIE_SECRET,
-        HONO_OIDC_CODE_VERIFIER_COOKIE,
-    } = env<HonoMiddlewareOidcEnv>(c);
-    const provider: IdentityProvider = await createIdentityProvider(
-        HONO_OIDC_ISSUER
-    );
-    const client: Client = provider.createClient(
-        HONO_OIDC_CLIENT_ID,
-        HONO_OIDC_CLIENT_SECRET
-    );
-    let id: Identity | undefined = c.get('identity');
-
-    if (!id) {
-        const stateId = randomstring.generate(5);
-        const state = { originUrl: c.get('originUrl') || c.req.url };
-        await setSignedCookie(
-            c,
-            `_authstate-${stateId}`,
-            JSON.stringify(state),
-            HONO_OIDC_COOKIE_SECRET,
-            { httpOnly: true, secure: true, sameSite: 'Lax' }
-        );
-        const codeVerifier = randomstring.generate(16);
-        await setSignedCookie(
-            c,
-            HONO_OIDC_CODE_VERIFIER_COOKIE,
-            codeVerifier,
-            HONO_OIDC_COOKIE_SECRET,
-            { httpOnly: true, secure: true, sameSite: 'Lax' }
-        );
-        const authRequest: AuthorizationRequest = client
-            .newAuthorizationRequest()
-            .setRedirectUri(HONO_OIDC_REDIRECT_URI)
-            .setResponseMode("query")
-            .setResponseType("code id_token")
-            .setScope(["profile"])
-            .setCodeChallenge(codeVerifier)
-            .setState(stateId);
-        const authRequestURL = authRequest.toURL();
-        return c.redirect(authRequestURL.toString());
-    }
-    await next();
-};
-
-/**
  * addIdentity
  * @param c 
  * @param next 
@@ -188,6 +132,62 @@ export const checkIdentity: MiddlewareHandler = async (c, next) => {
 
     if (!id)
         throw new HTTPException(401, { message: 'Unauthorized' });
+    await next();
+};
+
+/**
+ * handleFlow
+ * @param c 
+ * @param next 
+ * @returns 
+ */
+export const handleFlow: MiddlewareHandler = async (c, next) => {
+    const {
+        HONO_OIDC_ISSUER,
+        HONO_OIDC_CLIENT_ID,
+        HONO_OIDC_CLIENT_SECRET,
+        HONO_OIDC_REDIRECT_URI,
+        HONO_OIDC_COOKIE_SECRET,
+        HONO_OIDC_CODE_VERIFIER_COOKIE,
+    } = env<HonoMiddlewareOidcEnv>(c);
+    const provider: IdentityProvider = await createIdentityProvider(
+        HONO_OIDC_ISSUER
+    );
+    const client: Client = provider.createClient(
+        HONO_OIDC_CLIENT_ID,
+        HONO_OIDC_CLIENT_SECRET
+    );
+    let id: Identity | undefined = c.get('identity');
+
+    if (!id) {
+        const stateId = randomstring.generate(5);
+        const state = { originUrl: c.get('originUrl') || c.req.url };
+        await setSignedCookie(
+            c,
+            `_authstate-${stateId}`,
+            JSON.stringify(state),
+            HONO_OIDC_COOKIE_SECRET,
+            { httpOnly: true, secure: true, sameSite: 'Lax' }
+        );
+        const codeVerifier = randomstring.generate(16);
+        await setSignedCookie(
+            c,
+            HONO_OIDC_CODE_VERIFIER_COOKIE,
+            codeVerifier,
+            HONO_OIDC_COOKIE_SECRET,
+            { httpOnly: true, secure: true, sameSite: 'Lax' }
+        );
+        const authRequest: AuthorizationRequest = client
+            .newAuthorizationRequest()
+            .setRedirectUri(HONO_OIDC_REDIRECT_URI)
+            .setResponseMode("query")
+            .setResponseType("code id_token")
+            .setScope(["profile"])
+            .setCodeChallenge(codeVerifier)
+            .setState(stateId);
+        const authRequestURL = authRequest.toURL();
+        return c.redirect(authRequestURL.toString());
+    }
     await next();
 };
 
