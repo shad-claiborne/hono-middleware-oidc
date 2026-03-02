@@ -105,7 +105,6 @@ export const addIdentity: MiddlewareHandler = async (c, next) => {
     try {
         id = await provider.getIdentity(tokenSet);
     } catch (err) {
-        console.error(err);
     }
     if (!id) {
         try {
@@ -113,7 +112,6 @@ export const addIdentity: MiddlewareHandler = async (c, next) => {
             id = await provider.getIdentity(tokenResponse);
             await activateToken(c, provider, tokenResponse);
         } catch (err) {
-            console.error(err);
         }
     }
     if (id) {
