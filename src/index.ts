@@ -13,6 +13,7 @@ import {
 import randomstring from "randomstring";
 import { env } from "hono/adapter";
 import { Context, MiddlewareHandler } from "hono";
+import { HTTPException } from "hono/http-exception";
 
 /**
  * activateToken
@@ -174,6 +175,19 @@ export const addIdentity: MiddlewareHandler = async (c, next) => {
     if (id) {
         c.set("identity", id);
     }
+    await next();
+};
+
+/**
+ * checkIdentity
+ * @param c 
+ * @returns 
+ */
+export const checkIdentity: MiddlewareHandler = async (c, next) => {
+    const id = c.get('identity');
+
+    if (!id)
+        throw new HTTPException(401, { message: 'Unauthorized' });
     await next();
 };
 
