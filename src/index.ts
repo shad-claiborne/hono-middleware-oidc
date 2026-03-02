@@ -134,12 +134,12 @@ export const checkIdentity: MiddlewareHandler = async (c, next) => {
 };
 
 /**
- * handleFlow
+ * handleAuth
  * @param c 
  * @param next 
  * @returns 
  */
-export const handleFlow: MiddlewareHandler = async (c, next) => {
+export const handleAuth: MiddlewareHandler = async (c, next) => {
     const {
         HONO_OIDC_ISSUER,
         HONO_OIDC_CLIENT_ID,

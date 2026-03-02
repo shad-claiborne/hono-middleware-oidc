@@ -15,19 +15,20 @@
 ```
 ### Usage
 ```ts
-import {addIdentity, receiveAuth, handleFlow} from '@shad-claiborne/hono-middleware-oidc'
+import {addIdentity, checkIdentity, handleAuth, receiveAuth} from '@shad-claiborne/hono-middleware-oidc'
 
 ...
 
 // Add the identity claims to the request for all routes except the redirect URI
 app.use('*', except('/auth/callback', addIdentity));
+app.use('*', except(['/login', '/auth/callback'], checkIdentity));
 
 // The endpoint to which the authorization server provides the user's authorization
 app.use('/auth/callback', receiveAuth);
 
 // Send the browser to this endpoint to begin the authorization flow
 // Note this endpoint assumes "addIdentity" precedes it
-app.use('/login', handleFlow);
+app.use('/login', handleAuth);
 
 // Example ajax endpoint for getting the identity claims
 app.get('/async/api/identity', async (c) => {
